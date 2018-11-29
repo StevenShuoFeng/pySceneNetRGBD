@@ -21,20 +21,26 @@ NYU_13_CLASSES = [(0,'Unknown'),
                   (13,'Window')
 ]
 
-colour_code = np.array([[0, 0, 0],
-                       [0, 0, 1],
-                       [0.9137,0.3490,0.1882], #BOOKS
-                       [0, 0.8549, 0], #CEILING
-                       [0.5843,0,0.9412], #CHAIR
-                       [0.8706,0.9451,0.0941], #FLOOR
-                       [1.0000,0.8078,0.8078], #FURNITURE
-                       [0,0.8784,0.8980], #OBJECTS
-                       [0.4157,0.5333,0.8000], #PAINTING
-                       [0.4588,0.1137,0.1608], #SOFA
-                       [0.9412,0.1373,0.9216], #TABLE
-                       [0,0.6549,0.6118], #TV
-                       [0.9765,0.5451,0], #WALL
-                       [0.8824,0.8980,0.7608]])
+# colour_code = np.array([[0, 0, 0],
+#                        [0, 0, 1],
+#                        [0.9137,0.3490,0.1882], #BOOKS
+#                        [0, 0.8549, 0], #CEILING
+#                        [0.5843,0,0.9412], #CHAIR
+#                        [0.8706,0.9451,0.0941], #FLOOR
+#                        [1.0000,0.8078,0.8078], #FURNITURE
+#                        [0,0.8784,0.8980], #OBJECTS
+#                        [0.4157,0.5333,0.8000], #PAINTING
+#                        [0.4588,0.1137,0.1608], #SOFA
+#                        [0.9412,0.1373,0.9216], #TABLE
+#                        [0,0.6549,0.6118], #TV
+#                        [0.9765,0.5451,0], #WALL
+#                        [0.8824,0.8980,0.7608]])
+
+# Steven hack the encoding colour
+colour_code = np.array(range(14))/14.
+colour_code = np.reshape(colour_code, (14, 1))
+colour_code = np.tile(colour_code, (1, 3))
+
 
 NYU_WNID_TO_CLASS = {
     '04593077':4, '03262932':4, '02933112':6, '03207941':7, '03063968':10, '04398044':7, '04515003':7,
@@ -119,6 +125,13 @@ if __name__ == '__main__':
         print('Please ensure you have copied the pb file to the data directory')
 
     traj = random.choice(trajectories.trajectories)
+    for k in trajectories.trajectories:
+      print(k.render_path)
+      if k.render_path == '0/0':
+        traj = k
+        break
+
+    all_wordnet_id = []
     instance_class_map = {}
     for instance in traj.instances:
 
@@ -126,13 +139,20 @@ if __name__ == '__main__':
 
         if instance.instance_type != sn.Instance.BACKGROUND:
             instance_class_map[instance.instance_id] = NYU_WNID_TO_CLASS[instance.semantic_wordnet_id]
+            all_wordnet_id.append(instance_class_map[instance.instance_id])
+
+    print('All raw Ids:')
+    print(np.unique(all_wordnet_id))
 
     for view in traj.views:
-
+        print(view)
         instance_path = instance_path_from_view(traj.render_path,view)
         print('Converting instance image:{0} to class image'.format(instance_path))
 
-        save_class_from_instance(instance_path,'semantic_class.png','NYUv2.png',instance_class_map)
+        fn_sematic = instance_path.replace('png', 'semantic_class.png')
+        fn_nyu = instance_path.replace('png', 'NYUv2.png')
+
+        save_class_from_instance(instance_path, fn_sematic, fn_nyu, instance_class_map)
         print('Breaking early and writing class to semantic_class.png')
 
         break
